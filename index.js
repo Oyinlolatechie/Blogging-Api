@@ -1,8 +1,9 @@
-//require necessary modules
+//required necessary modules
 const express = require('express')
 const passport = require('passport')
 require("dotenv").config()
 
+const errorHandler = require('./middleware/errorHandler')
 const authRouter = require('./routes/authRouter')
 const blogRouter = require('./routes/blogRouter')
 const db = require('./models')
@@ -28,19 +29,16 @@ app.use('/auth', authRouter)
 app.use('/blogs', blogRouter)
 
 
+//home route 
 app.get('/', (req, res)=>{
     res.send('Welcome home!')
 })
 
-app.get('*', (req, res)=>{
-    res.send('Route doest not exist')
-})
-//set general error handler
-app.use((err, req, res, next)=>{
-    const statuscode = err.statuscode || 500
-    const message = err.message || "internal server error occured!"
-    return res.status(statuscode).json({status: "failed", message})
-})
+// app.get('*', (req, res)=>{
+//     res.send('Route doest not exist')
+// })
+
+app.use(errorHandler)
 
 app.listen(PORT, ()=>{
     console.log(`server started, on PORT: http://localhost:${PORT}`)

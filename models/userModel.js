@@ -30,21 +30,23 @@ const userSchema = new Schema ({
         required:[true, "Enter a password"]
     }
 
+}, {
+    timestamps : true
 })
 
-userSchema.pre("save", async function (next){
-    const hashedPassword = await bcrypt.hash(this.password, 10);
-    this.password = hashedPassword;
-    next();
-})
+// userSchema.pre("save", async function (next){
+//     const hashedPassword = await bcrypt.hash(this.password, 10);
+//     this.password = hashedPassword;
+//     next();
+// })
 
-userSchema.methods.isCorrectPassword = async function (inputedPassword) {
-    const isCorrectPassword = await bcrypt.compare(
-        inputedPassword,
-        this.password
-    );
-    return isCorrectPassword
-}
+// userSchema.methods.isCorrectPassword = async function (inputedPassword) {
+//     const isCorrectPassword = await bcrypt.compare(
+//         inputedPassword,
+//         this.password
+//     );
+//     return isCorrectPassword
+// }
 
 
 const User = mongoose.model("User", userSchema)

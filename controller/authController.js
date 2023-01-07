@@ -1,27 +1,38 @@
 const UserModel = require('../models/userModel')
 const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 
-
-const getToken = function (user) {
-  const payload = { user }
-  const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRY_TIME })
+//generate token
+const getToken =  (user) => {
+  const token = jwt.sign({user}, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRY_TIME })
   return token
 }
 
+
+//@desc sign up
+//@route POST /users
+//@access Public
 exports.signUp = async (req, res, next) => {
   const { firstName, lastName, email, password } = req.body
+
+  //hash user inputted password
+  const salt = await bcrypt.genSalt(10)
+  const hashedPassword = await bcrypt.hash(password, salt)
+
+  //create user, with hashed password
   try {
     const user = await UserModel.create({
       firstName,
       lastName,
       email,
-      password
+      password : hashedPassword
     })
-    user.password = undefined;
-    const token = getToken(user);
+
+    user.password = undefined; //exclude password from token
+
     return res.status(201).json({
       status: "success",
-      token,
+      token : getToken(user),
       data: user
     })
   } catch (err) {
@@ -30,23 +41,39 @@ exports.signUp = async (req, res, next) => {
 }
 
 
+//@desc Sign in
+//@route POST /users/login
+//@access Public
 exports.signIn = async (req, res, next) => {
-  console.log(req.headers)
   const { email, password } = req.body
-  if(!email || !password) return next(new Error ("Enter email and password"))
 
-  try {
-    const user = await UserModel.findOne({email})
-    if(!user) return next(new Error('user not found'))
+     //Validate user input
+      if(!email || !password) {
+        res.status(400)
+        return next(new Error("Enter email and password"))
+      }
     
-    const isCorrectPassword = await user.isCorrectPassword(password)
-    if(!isCorrectPassword) return next(new Error ("incorrect Password"))
-    const token = getToken(user);
-    return res.status(201).json({
-      status: "success",
-      token,
-      data: user
-    })
+  try {
+    //check if email entered exists
+    const user = await UserModel.findOne({email})
+    if(!user){
+      res.status(400)
+      return next(new Error('User not found'))
+    } 
+    
+    //check if password entered macthes with stored harshed password
+   if(user && (await bcrypt.compare(password, user.password))){
+    
+        res.status(201).json({
+        status: "success",
+        token : getToken(user),
+        data: user
+      })
+    } else {
+      res.status(400)
+      return next(new Error("Incorrect password")) 
+  }
+   
   } catch (err) {
     return next(err)
   }
