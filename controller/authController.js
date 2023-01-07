@@ -10,7 +10,7 @@ const getToken =  (user) => {
 
 
 //@desc sign up
-//@route POST /users
+//@route POST /auth/signup
 //@access Public
 exports.signUp = async (req, res, next) => {
   const { firstName, lastName, email, password } = req.body
@@ -42,7 +42,7 @@ exports.signUp = async (req, res, next) => {
 
 
 //@desc Sign in
-//@route POST /users/login
+//@route POST /auth/signin
 //@access Public
 exports.signIn = async (req, res, next) => {
   const { email, password } = req.body
@@ -63,7 +63,7 @@ exports.signIn = async (req, res, next) => {
     
     //check if password entered macthes with stored harshed password
    if(user && (await bcrypt.compare(password, user.password))){
-    
+
         res.status(201).json({
         status: "success",
         token : getToken(user),

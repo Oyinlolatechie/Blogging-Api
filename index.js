@@ -15,6 +15,8 @@ const PORT = process.env.PORT ||3000
 //initialize passport
 app.use(passport.initialize());
 require("./middleware/passport")
+
+
 //connect db
 db.connectToMongoDB()
 
