@@ -16,13 +16,13 @@ const blogSchema = new Schema ({
     },
     author_id: {
         type: objectId,
-        required: [true, "blog must have an author"],
+        // required: [true, "blog must have an author"],
         trim: true,
         ref: "User" 
     },
     author: {
         type: String,
-        required: [true, "blog must have an author"],
+        // required: [true, "blog must have an author"],
         trim: true  
     },
     state: {

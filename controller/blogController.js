@@ -8,21 +8,28 @@ exports.createBlog = async (req, res, next) => {
   const blogInfo = req.body; 
 
   //implementing reading_time
-  const reading_time = function () {
+  const reading_time = () => {
+     // Calculate the number of words in the post
     const blogLength =
       blogInfo.body.split(" ").length +
       blogInfo.title.split(" ").length +
       blogInfo.description.split(" ").length;
 
-    const blogReadingTime = blogLength / 200;
-    return `${blogReadingTime} mins`
+      // Set the average reading speed (in wpm)
+    const readingSpeed = 200;
+
+    const blogReadingTime = blogLength / readingSpeed;
+    return `${blogReadingTime} minute${blogReadingTime === 1 ? '' : 's'}`; //if blogReadingTime = 1, returns "minute" else returns "minutes"
 
   }
   blogInfo.reading_time = reading_time()
 
   //creating Blog 
   try {
-    const blog = await BlogModel.create({ ...blogInfo, author_id: req.user._id, author: `${req.user.firstName} ${req.user.lastName}` });
+    const blog = await BlogModel.create({ ...blogInfo, 
+      author_id: req.user._id, 
+      author: `${req.user.firstName} ${req.user.lastName}`});
+
     return res.status(201).json({
       status: "success",
       data: blog
