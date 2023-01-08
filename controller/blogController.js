@@ -1,5 +1,6 @@
 //require Blogmodel
 const { model } = require('mongoose');
+const blog = require('../models/blogModel');
 const BlogModel = require('../models/blogModel')
 
 
@@ -18,17 +19,19 @@ exports.createBlog = async (req, res, next) => {
       // Set the average reading speed (in wpm)
     const readingSpeed = 200;
 
-    const blogReadingTime = blogLength / readingSpeed;
+    const blogReadingTime = Math.ceil(blogLength / readingSpeed);
     return `${blogReadingTime} minute${blogReadingTime === 1 ? '' : 's'}`; //if blogReadingTime = 1, returns "minute" else returns "minutes"
 
   }
-  blogInfo.reading_time = reading_time()
+
+  //adding to the blogInfo inputted byt user
+  blogInfo.reading_time = reading_time();
+  blogInfo.author_id = req.user._id;
+  blogInfo.author = `${req.user.firstName} ${req.user.lastName}`;
 
   //creating Blog 
   try {
-    const blog = await BlogModel.create({ ...blogInfo, 
-      author_id: req.user._id, 
-      author: `${req.user.firstName} ${req.user.lastName}`});
+    const blog = await BlogModel.create(blogInfo);
 
     return res.status(201).json({
       status: "success",
@@ -41,7 +44,7 @@ exports.createBlog = async (req, res, next) => {
 
 
 //Get all blogs controller
-exports.getAllBlogs = async (req, res, next) => {
+  exports.getAllBlogs = async (req, res, next) => {
 
   //paginating Blogs per page
   const page = req.query.p || 1
@@ -67,17 +70,18 @@ exports.getAllBlogs = async (req, res, next) => {
 
   try {
     // fecthes paginated blogs based on queries 
-    const blogs = await BlogModel.find()
+    const blogs = await BlogModel.find({state : 'Published'})
       .find(serchQuery)
       .skip(skip)
       .limit(blogPerPage)
 
     if (!blogs) return next(new Error("Blog requested not found!"));
-
+    
+    // if (blogs.state == "Published")
     return res.status(200).json({
       status: "success",
       data: blogs
-    })
+    });
   } catch (err) {
     return next(err)
   }
