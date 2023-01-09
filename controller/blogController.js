@@ -55,23 +55,20 @@ exports.createBlog = async (req, res, next) => {
   const {
     title,
     tags,
-    order = 'asc',
-    order_by = 'timeStamp',
+    order,
+    order_by = "timestamp"
   } = req.query
-  const serchQuery = {}
 
-  if (title) {
-    serchQuery.title = title
-  }
 
-  if (tags) {
-    serchQuery.tags = tags
-  }
+const sort= {}
+
+sort[order_by] = order || 'asc'
+
 
   try {
     // fecthes paginated blogs based on queries 
-    const blogs = await BlogModel.find({state : 'Published'})
-      .find(serchQuery)
+    const blogs = await BlogModel.find({state : 'Published', ...(title && {title}), ...(tags && {tags})})
+      .sort(sort)
       .skip(skip)
       .limit(blogPerPage)
 
@@ -91,12 +88,14 @@ exports.createBlog = async (req, res, next) => {
 //Get Blog By Id controller
 exports.getBlogById = async (req, res, next) => {
   const { id } = req.params
+  console.log(id)
 
   try {
     const requestedBlog = await BlogModel.findOne({ "_id": id, state: "Published" }).populate("author_id", "-password")
 
     if (!requestedBlog) return next(new Error("Blog requested not found!"));
 
+    //inreament readcount
     requestedBlog.read_count += 1
 
     await requestedBlog.save()
@@ -124,15 +123,10 @@ exports.getBlogByOwner = async (req, res, next) => {
 
   //Filtering by state
   const { state } = req.query
-  console.log(state)
-  const filter = {}
 
-  filter.state = state
-  console.log(filter)
 
   try {
-    const ownerBlogs = await BlogModel.find({ author_id: ownerId })
-      .find(filter)
+    const ownerBlogs = await BlogModel.find({ author_id: ownerId,  ...(state && {state})})
       .skip(skip)
       .limit(blogPerPage)
 
@@ -156,9 +150,11 @@ exports.updateBlog = async (req, res, next) => {
 
   try {
     const blogToUpdate = await BlogModel.findById(id)
-    if (!blogToUpdate) return next(new Error("Blog doest not exist!"))
+    if (!blogToUpdate) 
+    return next(new Error("Blog doest not exist!"))
 
-    if (blogToUpdate.author_id.toString() !== req.user._id) return next(new Error("This blog can only be edited by it's author"))
+    if (blogToUpdate.author_id.toString() !== req.user._id) 
+    return next(new Error("This blog can only be edited by it's author"))
 
     const updatedBlog = await BlogModel.findByIdAndUpdate(id, infoToUpdate, {
       new: true,
